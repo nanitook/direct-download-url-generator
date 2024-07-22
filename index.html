@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convert to direct download links</title>
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* justify-content: center; */
+      height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+    }
+
+    input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-right: 1rem;
+    }
+
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-top: 0.5rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #f0f0f0;
+    }
+
+    #result {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    #result p {
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Convert to direct download links</h1>
+  <input type="url" id="urlInput">
+  <button onclick="buttonHandler()">Convert</button>
+
+  <div id="result">
+    <p>Result:</p>
+    <p id="resultUrl"></p>
+  </div>
+
+
+  <script>
+    function convertGoogleDriveUrl(sharingUrl) {
+      const fileIdMatch = sharingUrl.match(/\/d\/([^\/]+)\//);
+
+      if (fileIdMatch && fileIdMatch[1]) {
+        const fileId = fileIdMatch[1];
+        const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+        return downloadUrl;
+      } else {
+        throw new Error("Invalid Google Drive sharing URL");
+      }
+    }
+
+    function convertOneDriveUrl(sharingUrl) {
+      const base64Value = btoa(unescape(encodeURIComponent(sharingUrl)));
+      const encodedUrl = "u!" + base64Value.replace(/=+$/, '').replace(/\//g, '_').replace(/\+/g, '-');
+      const resultUrl = `https://api.onedrive.com/v1.0/shares/${encodedUrl}/root/content`;
+      return resultUrl;
+    }
+
+    function convertUrl(sharingUrl) {
+      try {
+        const url = new URL(sharingUrl);
+        const hostname = url.hostname;
+
+        if (hostname === "drive.google.com") {
+          return convertGoogleDriveUrl(sharingUrl);
+        } else if (hostname === "1drv.ms") {
+          return convertOneDriveUrl(sharingUrl);
+        } else {
+          throw new Error("Unsupported URL format");
+        }
+      } catch (e) {
+        throw new Error("Invalid URL");
+      }
+    }
+
+    function buttonHandler() {
+      const urlInput = document.getElementById("urlInput");
+      const resultUrl = document.getElementById("resultUrl");
+      const url = urlInput.value;
+
+      try {
+        const convertedUrl = convertUrl(url);
+        resultUrl.textContent = convertedUrl;
+      } catch (e) {
+        resultUrl.textContent = e.message;
+      }
+    }
+  </script>
+</body>
+
+</html>
